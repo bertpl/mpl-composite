@@ -1,6 +1,6 @@
 [project]
 name = "mpl-composite"
-version = "0.0.1"
+version = "0.0.2"
 description = "Matplotlib wrapper for composite figure building."
 readme = "README.md"
 authors = [
