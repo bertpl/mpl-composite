@@ -7,7 +7,9 @@ help:
 	@echo ''
 	@echo '  build		                    (Re)build package using uv.'
 	@echo ''
+	@echo '  dev-setup                      One-time: sync dev deps & install pre-commit hooks.'
 	@echo '  test		                    Run pytest unit tests.'
+	@echo '  lint		                    Run all pre-commit hooks on all files.'
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
@@ -20,24 +22,26 @@ help:
 build:
 	uv build;
 
+dev-setup:
+	uv sync
+	uv run pre-commit install
+
 test:
-	# run all tests - with numba & just 1 python version
-	uv run --all-extras --python 3.13 pytest ./tests
+	uv run --python 3.13 pytest ./tests
 
 coverage:
-	# run tests with Python 3.11; WITHOUT optional dependencies & create new report
-	uv sync	# should remove numba
-	uv run --python 3.11 pytest ./tests --cov --cov-report=html
-	# run tests with Python 3.13; WITH ALL optional dependencies & append to report
-	uv run --all-extras --python 3.13 pytest ./tests --cov --cov-append --cov-report=html
+	uv run --python 3.13 pytest ./tests --cov --cov-report=html
+
+lint:
+	uv run pre-commit run --all-files
 
 format:
-	uvx ruff format .;
-	uvx ruff check --fix .;
+	uv run ruff format .;
+	uv run ruff check --fix .;
 
 format-single-file:
-	uvx ruff format ${file_path};
-	uvx ruff check --fix ${file_path};
+	uv run ruff format ${file_path};
+	uv run ruff check --fix ${file_path};
 
 splash:
 	./.github/scripts/create_splash.sh "$$(uv version --short)-dev";

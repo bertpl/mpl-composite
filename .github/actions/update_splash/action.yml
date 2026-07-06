@@ -41,14 +41,14 @@ runs:
             else
               DISPLAY_VERSION="v${PACKAGE_VERSION}"
             fi
-            echo "DISPLAY_VERSION=$DISPLAY_VERSION" >> $GITHUB_ENV  
+            echo "DISPLAY_VERSION=$DISPLAY_VERSION" >> $GITHUB_ENV
 
       - name: Prepare splash screen
         shell: bash
         run: |
             ./.github/scripts/create_splash.sh "${DISPLAY_VERSION}"
             mkdir -p "./splash"
-            cp "./images/splash_with_version.webp" "./splash/splash.webp"           
+            cp "./images/splash_with_version.webp" "./splash/splash.webp"
 
       - name: Pass splash to next action
         uses: actions/upload-artifact@v4
