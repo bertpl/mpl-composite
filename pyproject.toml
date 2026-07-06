@@ -143,6 +143,8 @@ exclude_also = [
 ]
 
 [tool.codespell]
+# "intoto": the in-toto attestation format (provenance.intoto.jsonl).
+ignore-words-list = "intoto"
 # Notebooks embed base64 image outputs that codespell misreads as typos.
 skip = "*.ipynb"
 
