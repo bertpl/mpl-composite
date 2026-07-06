@@ -8,8 +8,14 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "numpy>=2.0.0",
-    "matplotlib>=3.8",
+    # Per-Python floors: each is the earliest version shipping a wheel for that
+    # CPython, so `lowest-direct` installs (not source-builds) across the whole matrix.
+    "numpy>=2.0.0; python_version < '3.13'",
+    "numpy>=2.1.0; python_version == '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
+    "matplotlib>=3.8; python_version < '3.13'",
+    "matplotlib>=3.9.2; python_version == '3.13'",
+    "matplotlib>=3.10.7; python_version >= '3.14'",
 ]
 
 [dependency-groups]
