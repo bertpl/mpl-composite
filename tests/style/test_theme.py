@@ -4,7 +4,7 @@ from mpl_composite.style import DEFAULT_THEME, LineStyle, Theme
 def test_default_theme_is_a_populated_theme() -> None:
     # --- act / assert -----------------
     assert isinstance(DEFAULT_THEME, Theme)
-    assert DEFAULT_THEME == Theme()
+    assert Theme() == DEFAULT_THEME
     assert DEFAULT_THEME.border_major.width > DEFAULT_THEME.border_minor.width
 
 

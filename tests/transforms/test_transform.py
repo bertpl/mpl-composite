@@ -183,7 +183,9 @@ def test_linlog_reversed_round_trip() -> None:
 def test_linlog_rejects_invalid_parameters(plot_lin_max: float, ax_lin_fraction: float, match: str) -> None:
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=match):
-        Transform.lin_log(Range(0.0, 1000.0), Range(0.0, 1.0), plot_lin_max=plot_lin_max, ax_lin_fraction=ax_lin_fraction)
+        Transform.lin_log(
+            Range(0.0, 1000.0), Range(0.0, 1.0), plot_lin_max=plot_lin_max, ax_lin_fraction=ax_lin_fraction
+        )
 
 
 def test_linlog_rejects_non_positive_seam() -> None:

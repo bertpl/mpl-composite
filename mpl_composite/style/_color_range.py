@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import pairwise
 
 RGB = tuple[float, float, float]
 
@@ -22,7 +23,7 @@ class ColorRange:
         if len(self.stops) < 2:
             raise ValueError(f"ColorRange requires at least 2 stops (here: {len(self.stops)}).")
         positions = [position for position, _ in self.stops]
-        if any(p1 >= p2 for p1, p2 in zip(positions, positions[1:], strict=False)):
+        if any(p1 >= p2 for p1, p2 in pairwise(positions)):
             raise ValueError(f"ColorRange stop positions must be strictly increasing (here: {positions}).")
 
     # --------------------------------------------------------------------------
@@ -35,7 +36,7 @@ class ColorRange:
         if v >= self.stops[-1][0]:
             return self.stops[-1][1]
 
-        for (p_lo, c_lo), (p_hi, c_hi) in zip(self.stops, self.stops[1:], strict=False):
+        for (p_lo, c_lo), (p_hi, c_hi) in pairwise(self.stops):
             if p_lo <= v <= p_hi:
                 f = (v - p_lo) / (p_hi - p_lo)
                 return (
