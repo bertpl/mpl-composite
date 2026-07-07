@@ -5,6 +5,7 @@
 ![Python](https://img.shields.io/pypi/pyversions/mpl-composite.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)
+![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/bertpl/mpl-composite/badge)
 
 # mpl-composite
 
