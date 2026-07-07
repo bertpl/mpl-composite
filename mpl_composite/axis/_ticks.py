@@ -38,9 +38,13 @@ class Ticks:
     def __post_init__(self) -> None:
         """Validate parallel lengths and drop minors that duplicate a major position."""
         if len(self.major) != len(self.major_labels):
-            raise ValueError(f"major and major_labels must be parallel ({len(self.major)} vs {len(self.major_labels)}).")
+            raise ValueError(
+                f"major and major_labels must be parallel ({len(self.major)} vs {len(self.major_labels)})."
+            )
         if len(self.minor) != len(self.minor_labels):
-            raise ValueError(f"minor and minor_labels must be parallel ({len(self.minor)} vs {len(self.minor_labels)}).")
+            raise ValueError(
+                f"minor and minor_labels must be parallel ({len(self.minor)} vs {len(self.minor_labels)})."
+            )
 
         filtered = [
             (position, label)

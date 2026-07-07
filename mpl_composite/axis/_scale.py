@@ -123,8 +123,9 @@ class ScaleLog(Scale):
 # ==================================================================================================
 @dataclass(frozen=True)
 class ScaleLinLog(Scale):
-    """Linear below lin_max, logarithmic above — for axes that must show 0 (or
-    negative values) and still span decades.
+    """Linear below lin_max, logarithmic above.
+
+    For axes that must show 0 (or negative values) and still span decades.
     """
 
     lin_max: float
@@ -132,7 +133,9 @@ class ScaleLinLog(Scale):
 
     def transform(self, value_range: Range, ax_range: Range, *, reverse: bool = False) -> Transform:
         """Build a lin-log Transform (requires value_range to straddle lin_max)."""
-        return Transform.lin_log(value_range, ax_range, plot_lin_max=self.lin_max, ax_lin_fraction=self.lin_fraction, reverse=reverse)
+        return Transform.lin_log(
+            value_range, ax_range, plot_lin_max=self.lin_max, ax_lin_fraction=self.lin_fraction, reverse=reverse
+        )
 
     def ticks(self, value_range: Range, *, n_major_target: int = 5, fmt: Callable[[float], str] | None = None) -> Ticks:
         """Tick composition across the lin-log seam is not implemented yet.
