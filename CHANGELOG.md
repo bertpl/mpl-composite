@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Declarative table column specs with explicit grouping: TableColumn, PlottingColumn, ColumnGroup
 - Table element with banded rows, grouped columns, and a cell-drawing API
+- Table columns that embed row-aligned data plots, plus skewed column labels
 
 ### Changed
 
