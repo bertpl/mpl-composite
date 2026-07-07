@@ -90,6 +90,7 @@ def linear_ticks(
     *,
     n_major_target: int = 5,
     n_minor_per_major: int = 4,
+    label_minor: bool = False,
     fmt: Callable[[float], str] | None = None,
 ) -> Ticks:
     """Generate 'nice' linear ticks covering [v_min, v_max].
@@ -105,6 +106,8 @@ def linear_ticks(
         v_max: Upper bound of the value range.
         n_major_target: Desired number of major ticks (a target, not a promise).
         n_minor_per_major: Minor ticks between two consecutive majors.
+        label_minor: Whether minor ticks get labels; off by default (the
+            classic look — linear minors are dense enough to read by eye).
         fmt: Tick-label formatter; defaults to compact '%g' formatting.
 
     Raises:
@@ -138,7 +141,7 @@ def linear_ticks(
         major=tuple(major),
         major_labels=tuple(fmt(v) for v in major),
         minor=tuple(minor),
-        minor_labels=tuple(fmt(v) for v in minor),
+        minor_labels=tuple(fmt(v) if label_minor else "" for v in minor),
     )
 
 
