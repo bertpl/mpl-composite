@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from mpl_composite.geometry import HAlign, LinearGrid, Margin, Range, VAlign, XYZ, XYZRange
+from mpl_composite.geometry import XYZ, HAlign, LinearGrid, Margin, Range, VAlign, XYZRange
 from mpl_composite.transforms import Transform, XYZTransform
 
 from ._element import Element
