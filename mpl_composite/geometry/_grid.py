@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Hashable, Iterable
+from typing import TYPE_CHECKING
 
 from ._range import Range
+
+if TYPE_CHECKING:
+    from collections.abc import Hashable, Iterable
 
 
 class LinearGrid:

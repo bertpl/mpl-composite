@@ -50,5 +50,5 @@ class Range:
         return self.min - eps <= other <= self.max + eps
 
     def at(self, p: float) -> float:
-        """Interpolate within the interval: at(0.0) == min, at(1.0) == max."""
+        """Interpolate within the interval: p=0 gives min, p=1 gives max."""
         return self.min + p * self.size

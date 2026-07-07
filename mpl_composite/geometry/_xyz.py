@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from ._range import Range
+if TYPE_CHECKING:
+    from ._range import Range
 
 
 @dataclass(frozen=True)
@@ -31,4 +33,8 @@ class XYZRange:
 
     def contains(self, other: XYZRange, *, tol: float = 1e-9) -> bool:
         """Check per-dimension containment of another block (see Range.contains for tolerance semantics)."""
-        return self.x.contains(other.x, tol=tol) and self.y.contains(other.y, tol=tol) and self.z.contains(other.z, tol=tol)
+        return (
+            self.x.contains(other.x, tol=tol)
+            and self.y.contains(other.y, tol=tol)
+            and self.z.contains(other.z, tol=tol)
+        )
