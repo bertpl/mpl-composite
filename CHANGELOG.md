@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.0.3 (2026-07-07)
 
 ### Added
 
@@ -17,16 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project is now MIT licensed (was Apache-2.0)
 - README badges and splash are now served from the repo / shields.io instead of GitHub Pages
 
-### Deprecated
-
-### Removed
-
-### Fixed
-
 ### Security
 
 - Releases now ship SLSA build provenance and a GitHub Release with the changelog excerpt
-
 ## 0.0.2 (2025-11-07)
 
 ### Changed
