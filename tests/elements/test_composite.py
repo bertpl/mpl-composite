@@ -66,12 +66,12 @@ def test_top_down_rows() -> None:
     layout = composite.place(_region())
 
     # --- assert -----------------------
-    top_region_y = layout.children[0].canvas.sub_region(
-        XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))
-    ).xyz.y
-    bottom_region_y = layout.children[1].canvas.sub_region(
-        XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))
-    ).xyz.y
+    top_region_y = (
+        layout.children[0].canvas.sub_region(XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))).xyz.y
+    )
+    bottom_region_y = (
+        layout.children[1].canvas.sub_region(XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))).xyz.y
+    )
     assert top_region_y == Range(0.5, 1.0)  # row 0 sits at high ax y (the visual top)
     assert bottom_region_y == Range(0.0, 0.5)
 
@@ -87,9 +87,9 @@ def test_alignment_and_margin_produce_exact_child_regions() -> None:
     layout = composite.place(_region())
 
     # --- assert -----------------------
-    child_block = layout.children[0].canvas.sub_region(
-        XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))
-    ).xyz
+    child_block = (
+        layout.children[0].canvas.sub_region(XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))).xyz
+    )
     assert child_block.x.min == pytest.approx(0.25 / 1.5)
     assert child_block.x.max == pytest.approx(1.25 / 1.5)
     assert child_block.y.min == pytest.approx(1.0 - 1.25 / 1.5)  # TOP in a top-down grid -> high ax y
@@ -108,9 +108,9 @@ def test_fill_alignment_stretches_child_over_the_cell() -> None:
 
     # --- assert -----------------------
     # the small child's unit plot range spans the full column width
-    small_block = layout.children[0].canvas.sub_region(
-        XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))
-    ).xyz
+    small_block = (
+        layout.children[0].canvas.sub_region(XYZRange(x=Range(0.0, 1.0), y=Range(0.0, 1.0), z=Range(0.0, 1.0))).xyz
+    )
     assert small_block.x == Range(0.0, 1.0)
 
 
