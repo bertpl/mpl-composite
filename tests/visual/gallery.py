@@ -12,6 +12,9 @@ from typing import TYPE_CHECKING
 from mpl_composite import (
     Composite,
     CompositeFigure,
+    HAlign,
+    Legend,
+    LegendEntry,
     LineStyle,
     PlotAxes,
     PlotAxis,
@@ -19,6 +22,7 @@ from mpl_composite import (
     Spacer,
     Text,
     TextStyle,
+    VAlign,
 )
 
 if TYPE_CHECKING:
@@ -40,17 +44,30 @@ def demo_composite() -> CompositeFigure:
     return fig
 
 
+_CURVE_STYLE = LineStyle(color=(0.2, 0.3, 0.8))
+_SAMPLE_STYLE = LineStyle(color=(0.8, 0.3, 0.2), line_enabled=False, marker="o", marker_size=3.0)
+
+
 class _ScatterDemo(PlotAxes):
-    """Worked PlotAxes subclass: curves, scattered markers, and an annotation."""
+    """Worked PlotAxes subclass: curves, scattered markers, an annotation, and a legend."""
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        """Assemble the plot and anchor a legend on top of its plot area."""
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+        legend = Legend(
+            [LegendEntry("power law", _CURVE_STYLE), LegendEntry("samples", _SAMPLE_STYLE)],
+            row_height=0.04,
+        )
+        self.add(1, 1, legend, h_align=HAlign.RIGHT, v_align=VAlign.TOP, margin=0.015)
 
     def draw_plot(self, canvas: Canvas) -> None:
         """Two curves in data coordinates plus a pointed-out sample."""
         x = [0.5 + 0.05 * i for i in range(191)]
-        canvas.plot(x, [10.0 * v**-1.5 for v in x], LineStyle(color=(0.2, 0.3, 0.8)))
+        canvas.plot(x, [10.0 * v**-1.5 for v in x], _CURVE_STYLE)
         canvas.plot(
             x[::10],
             [3.0 * math.exp(-((v - 5.0) ** 2)) + 0.1 for v in x[::10]],
-            LineStyle(color=(0.8, 0.3, 0.2), line_enabled=False, marker="o", marker_size=3.0),
+            _SAMPLE_STYLE,
         )
         canvas.text(5.0, 3.5, "peak", TextStyle(size=8.0), zorder=0.5)
 
