@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vectorized linear/log/lin-log coordinate transforms and line/text/theme style objects
 - Data axes with linear/log/lin-log scales and automatic tick generation
 - Element-local drawing canvas with renderer-based text measurement
+- The composite-figure engine: element tree, grid layout with margins and alignment, nested z-ordering, auto-sized figures
 
 ### Changed
 
