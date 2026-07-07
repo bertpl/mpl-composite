@@ -10,6 +10,7 @@ import math
 from typing import TYPE_CHECKING
 
 from mpl_composite import (
+    ColumnGroup,
     Composite,
     CompositeFigure,
     HAlign,
@@ -21,6 +22,9 @@ from mpl_composite import (
     ScaleLinLog,
     ScaleLog,
     Spacer,
+    Table,
+    TableColumn,
+    TableLayout,
     Text,
     TextStyle,
     VAlign,
@@ -118,8 +122,57 @@ def linlog_plot_demo() -> CompositeFigure:
     return fig
 
 
+_RUNNERS = [
+    ("1", "Ada Swift", "12.3", "24.9", "51.0"),
+    ("2", "Bo Keita", "12.5", "25.1", "50.2"),
+    ("3", "Cato Brandt", "12.4", "25.6", "52.3"),
+    ("4", "Dee Okafor", "12.9", "25.8", "53.1"),
+    ("5", "Eli Varga", "13.1", "26.2", "54.7"),
+    ("6", "Fay Lindqvist", "13.0", "26.7", "55.0"),
+]
+
+
+class _RunnersTable(Table):
+    """Worked Table subclass: a small race-results table with two column groups."""
+
+    def __init__(self) -> None:
+        """Declare the columns: a left-aligned identity group + three timing columns."""
+        self._rank_col = TableColumn(width=0.05, h_align=HAlign.LEFT)
+        self._name_col = TableColumn(width=0.25, h_align=HAlign.LEFT)
+        self._time_cols = TableColumn.multi(3, width=0.11)
+        super().__init__(
+            n_rows=len(_RUNNERS),
+            row_height=0.05,
+            groups=(
+                ColumnGroup(columns=(self._rank_col, self._name_col), name="runner"),
+                ColumnGroup(columns=self._time_cols, name="splits"),
+            ),
+            cell_margin=0.01,
+            header_rows=1.0,
+            footer_rows=0.5,
+        )
+
+    def draw_content(self, table: TableLayout) -> None:
+        """Column titles plus one text cell per (row, column)."""
+        table.col_title(self._rank_col, "#")
+        table.col_title(self._name_col, "name")
+        for col, title in zip(self._time_cols, ["100m", "200m", "400m"], strict=True):
+            table.col_title(col, title)
+        for i_row, row in enumerate(_RUNNERS):
+            for col, value in zip([self._rank_col, self._name_col, *self._time_cols], row, strict=True):
+                table.cell_text(i_row, col, value)
+
+
+def table_demo() -> CompositeFigure:
+    """A banded table with grouped columns, titles, and per-cell text."""
+    fig = CompositeFigure(fig_inch_per_unit=8.0)
+    fig.add(0, 0, _RunnersTable(), margin=0.03)
+    return fig
+
+
 GALLERY: dict[str, Callable[[], CompositeFigure]] = {
     "demo_composite": demo_composite,
     "plot_axes_demo": plot_axes_demo,
     "linlog_plot_demo": linlog_plot_demo,
+    "table_demo": table_demo,
 }

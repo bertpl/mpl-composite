@@ -6,9 +6,11 @@ from .figure import CompositeFigure, save_figure
 from .geometry import HAlign, Margin, Range, VAlign
 from .plot import Legend, LegendEntry, PlotAxes
 from .style import ColorRange, FontWeight, LineStyle, TextStyle, Theme
+from .table import ColumnGroup, PlottingColumn, Table, TableColumn, TableLayout
 
 __all__ = [
     "ColorRange",
+    "ColumnGroup",
     "Composite",
     "CompositeFigure",
     "FontWeight",
@@ -19,11 +21,15 @@ __all__ = [
     "Margin",
     "PlotAxes",
     "PlotAxis",
+    "PlottingColumn",
     "Range",
     "ScaleLinLog",
     "ScaleLinear",
     "ScaleLog",
     "Spacer",
+    "Table",
+    "TableColumn",
+    "TableLayout",
     "Text",
     "TextStyle",
     "Theme",
