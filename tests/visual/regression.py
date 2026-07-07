@@ -19,9 +19,10 @@ matplotlib.use("Agg", force=True)  # baselines and comparisons are Agg renders, 
 
 import matplotlib.image
 import matplotlib.pyplot as plt
-import numpy as np
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from mpl_composite import CompositeFigure
 
 BASELINE_DIR = Path(__file__).parent / "baselines"
