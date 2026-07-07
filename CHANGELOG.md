@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Declarative table column specs with explicit grouping: TableColumn, PlottingColumn, ColumnGroup
+- Table element with banded rows, grouped columns, and a cell-drawing API
 
 ### Changed
 
