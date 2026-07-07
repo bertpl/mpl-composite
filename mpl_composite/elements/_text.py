@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mpl_composite.geometry import HAlign, VAlign, XYZ
+from mpl_composite.geometry import XYZ, HAlign, VAlign
 from mpl_composite.style import TextStyle
 
 from ._element import Element

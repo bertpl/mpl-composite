@@ -4,7 +4,7 @@ import pytest
 
 from mpl_composite.canvas import Region
 from mpl_composite.elements import Composite
-from mpl_composite.geometry import HAlign, Range, VAlign, XYZ, XYZRange
+from mpl_composite.geometry import XYZ, HAlign, Range, VAlign, XYZRange
 
 from ._probe import Probe
 
