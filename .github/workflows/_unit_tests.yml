@@ -1,0 +1,74 @@
+name: Unit tests (full matrix)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: py${{ matrix.python }} / ${{ matrix.resolution }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-only: pure Python + numpy/matplotlib with no OS-specific code paths,
+        # so one OS exercises everything. Strategic combos cover every axis (all four
+        # Pythons, both resolution ends) rather than their full product.
+        include:
+          - { python: "3.11", resolution: highest       }
+          - { python: "3.12", resolution: highest       }
+          - { python: "3.13", resolution: highest       }
+          - { python: "3.14", resolution: highest       }
+          - { python: "3.11", resolution: lowest-direct }
+          - { python: "3.14", resolution: lowest-direct }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/unit_test
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          python_version: ${{ matrix.python }}
+          dependency_resolution: ${{ matrix.resolution }}
+          coverage: "true"  # each combo uploads its data; the coverage job unions + gates
+
+  coverage:
+    name: coverage
+    # Cumulative gate: combine every combo's data into one picture before checking the
+    # floor, so version-/dependency-divergent code paths (only hit on some combos) don't
+    # read as uncovered.
+    needs: [core]
+    # always() so a cancelled/failed combo makes this job FAIL explicitly rather than
+    # skip — GitHub doesn't reliably propagate a cancelled leg through needs.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every matrix combo to have succeeded
+        if: needs.core.result != 'success'
+        run: |
+          echo "::error::test matrix did not fully succeed (core result: ${{ needs.core.result }})"
+          exit 1
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: ${{ vars.UV_VERSION }}
+      - name: Download coverage data from all matrix combos
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-data-*
+          merge-multiple: true
+      - name: Combine and report (fails below the [tool.coverage.report] floor)
+        run: |
+          uv run --group dev coverage combine
+          uv run --group dev coverage report
+      - name: Compute release metrics (coverage % + test count)
+        run: uv run --group dev python .github/scripts/ci_compute_metrics.py metrics.json
+      - name: Upload release metrics
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-metrics
+          path: metrics.json

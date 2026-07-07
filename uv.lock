@@ -1,6 +1,11 @@
 version = 1
 revision = 3
 requires-python = ">=3.11"
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
 
 [[package]]
 name = "certifi"
@@ -729,8 +734,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "matplotlib", specifier = ">=3.8" },
-    { name = "numpy", specifier = ">=2.0.0" },
+    { name = "matplotlib", marker = "python_full_version < '3.13'", specifier = ">=3.8" },
+    { name = "matplotlib", marker = "python_full_version == '3.13.*'", specifier = ">=3.9.2" },
+    { name = "matplotlib", marker = "python_full_version >= '3.14'", specifier = ">=3.10.7" },
+    { name = "numpy", marker = "python_full_version < '3.13'", specifier = ">=2.0.0" },
+    { name = "numpy", marker = "python_full_version == '3.13.*'", specifier = ">=2.1.0" },
+    { name = "numpy", marker = "python_full_version >= '3.14'", specifier = ">=2.3.2" },
 ]
 
 [package.metadata.requires-dev]
