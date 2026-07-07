@@ -15,8 +15,14 @@ dependencies = [
 [dependency-groups]
 dev = [
     "genbadge[all]>=1.1.2",
+    "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
+    "pytest-xdist>=3.5.0",
+    # exact tool versions are pinned by the tracked uv.lock (used by pre-commit,
+    # `make lint`, and CI); these ranges just set the floor.
+    "ruff>=0.15.11",
+    "ty==0.0.56",  # pre-1.0 type checker — pin exactly; its ruleset is still evolving
 ]
 
 [project.urls]
@@ -37,16 +43,73 @@ packages = ["mpl_composite"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py313"
+target-version = "py311"
 
 [tool.ruff.lint]
-select = ["I"]
+# Broad rule set; PLC/PLR (pylint conventions/refactors) are deliberately excluded
+# as noisy; specific carve-outs live in `per-file-ignores` below.
+select = [
+    "F",       # pyflakes
+    "E", "W",  # pycodestyle (incl. E501 line-too-long)
+    "I",       # isort
+    "UP",      # pyupgrade
+    "C4",      # flake8-comprehensions
+    "PIE",     # flake8-pie
+    "SIM",     # flake8-simplify
+    "RET",     # flake8-return
+    "PTH",     # flake8-use-pathlib
+    "TC",      # flake8-type-checking
+    "RUF",     # ruff-native
+    "PLE", "PLW",  # pylint errors + warnings (PLC/PLR excluded — noisy)
+    "PGH",     # pygrep-hooks: no blanket `noqa` / `type: ignore`
+    "BLE",     # flake8-blind-except
+    "A",       # flake8-builtins: shadowing
+    "RSE",     # flake8-raise: no needless parens on `raise`
+    "FLY",     # flynt: static str-join → f-string
+    "INP",     # flake8-no-pep420: every package dir has an __init__.py
+    "D",       # pydocstyle (Google convention)
+    "B",       # flake8-bugbear
+    "N",       # pep8-naming
+    "PT",      # flake8-pytest-style
+    "ANN",     # flake8-annotations
+    "SLF",     # flake8-self: private-member access
+    "S",       # flake8-bandit: security lint
+    "C901",    # mccabe complexity gate (threshold in [tool.ruff.lint.mccabe])
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"                     # names given as a single "a, b" string
+raises-require-match-for = ["Exception", "BaseException"]  # only the truly broad base exceptions need match=
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty
+"__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
+".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
+
+[tool.ty.src]
+include = ["mpl_composite"]
 
 [tool.coverage.run]
 source = ["mpl_composite"]
+relative_files = true  # so per-combo matrix data files combine without a [paths] map
 
 [tool.coverage.report]
+precision = 2
+fail_under = 95        # cumulative gate, enforced on the combined matrix data
 exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",
 ]
+
+[tool.codespell]
+# Notebooks embed base64 image outputs that codespell misreads as typos.
+skip = "*.ipynb"
+
+[tool.pytest.ini_options]
+addopts = "-n auto --dist worksteal"
