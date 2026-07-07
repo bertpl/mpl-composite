@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Classic x/y plot element family: framed plot area with grid, drawn axes with ticks and labels, title
 - Anchorable multi-column legend element with measured label widths
+- Automatic tick generation for lin-log axes
 
 ### Changed
 

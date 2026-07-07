@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from mpl_composite.geometry import Range
 from mpl_composite.transforms import Transform
 
-from ._ticks import Ticks, linear_ticks, log_ticks
+from ._ticks import Ticks, _default_fmt, linear_ticks, log_ticks
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -138,13 +138,36 @@ class ScaleLinLog(Scale):
         )
 
     def ticks(self, value_range: Range, *, n_major_target: int = 5, fmt: Callable[[float], str] | None = None) -> Ticks:
-        """Tick composition across the lin-log seam is not implemented yet.
+        """Compose linear and log ticks across the seam at lin_max.
 
-        Raises:
-            NotImplementedError: Always — supply hand-made Ticks (e.g. via
-                Ticks.from_values) for lin-log axes for now.
+        The major-tick budget splits between the segments by their screen
+        share (lin_fraction); lin_max itself is the single shared seam tick.
+        Both segments format through the same fmt, so labels read as one axis.
+        A range that does not straddle lin_max degrades to the matching
+        single-segment algorithm.
         """
-        raise NotImplementedError("ScaleLinLog.ticks is not implemented yet; supply hand-made Ticks instead.")
+        fmt = fmt or _default_fmt
+        if value_range.max <= self.lin_max:
+            return linear_ticks(value_range.min, value_range.max, n_major_target=n_major_target, fmt=fmt)
+        if value_range.min >= self.lin_max:
+            return log_ticks(value_range.min, value_range.max, fmt=fmt)
+
+        # --- per-segment ticks, budget split by screen share
+        n_lin_target = max(2, round(n_major_target * self.lin_fraction))
+        lin = linear_ticks(value_range.min, self.lin_max, n_major_target=n_lin_target, fmt=fmt)
+        log = log_ticks(self.lin_max, value_range.max, fmt=fmt)
+
+        # --- compose: seam tick shared, one fmt pass ------
+        major = sorted({*lin.major, self.lin_max, *log.major})
+        minor = sorted(set(lin.minor) | set(log.minor))
+        lin_minor_labels = dict(zip(lin.minor, lin.minor_labels, strict=True))
+        return Ticks(
+            major=tuple(major),
+            major_labels=tuple(fmt(v) for v in major),
+            minor=tuple(minor),
+            # linear minors stay unlabeled per linear_ticks; log minors keep their labels
+            minor_labels=tuple(lin_minor_labels.get(v, fmt(v)) for v in minor),
+        )
 
     def expand(self, values: Sequence[float], *, margin: float = 0.05) -> Range:
         """Pad each value extreme in its own segment's space.

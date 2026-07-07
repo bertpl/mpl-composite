@@ -18,6 +18,7 @@ from mpl_composite import (
     LineStyle,
     PlotAxes,
     PlotAxis,
+    ScaleLinLog,
     ScaleLog,
     Spacer,
     Text,
@@ -90,7 +91,35 @@ def plot_axes_demo() -> CompositeFigure:
     return fig
 
 
+class _LinLogDemo(PlotAxes):
+    """A curve rising from zero through several decades: the lin-log showcase."""
+
+    def draw_plot(self, canvas: Canvas) -> None:
+        """One quadratic-growth curve crossing the lin-log seam."""
+        x = [0.05 * i for i in range(201)]
+        canvas.plot(x, [v**3 for v in x], _CURVE_STYLE)
+
+
+def linlog_plot_demo() -> CompositeFigure:
+    """A classic plot with an automatic lin-log y axis (linear below 1, log above)."""
+    fig = CompositeFigure(fig_inch_per_unit=6.0)
+    fig.add(
+        0,
+        0,
+        _LinLogDemo(
+            PlotAxis.from_range(0.0, 10.0, label="x value"),
+            PlotAxis.from_range(0.0, 1000.0, scale=ScaleLinLog(lin_max=1.0, lin_fraction=0.3), label="y value"),
+            plot_width=1.0,
+            plot_height=0.7,
+            title="Lin-log demo",
+        ),
+        margin=0.02,
+    )
+    return fig
+
+
 GALLERY: dict[str, Callable[[], CompositeFigure]] = {
     "demo_composite": demo_composite,
     "plot_axes_demo": plot_axes_demo,
+    "linlog_plot_demo": linlog_plot_demo,
 }
