@@ -10,11 +10,12 @@ from mpl_composite.geometry import HAlign, Range, VAlign, XYZRange
 from mpl_composite.style import TextStyle
 
 from ._measure import artist_size
-from ._region import Region
 
 if TYPE_CHECKING:
     from mpl_composite.style import LineStyle
     from mpl_composite.transforms import Transform, XYZTransform
+
+    from ._region import Region
 
 _DEFAULT_TEXT_STYLE = TextStyle()
 
