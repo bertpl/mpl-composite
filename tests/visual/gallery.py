@@ -30,6 +30,7 @@ from mpl_composite import (
     TextStyle,
     VAlign,
 )
+from mpl_composite.geometry import Range, XYZRange
 from mpl_composite.style import DEFAULT_THEME
 
 if TYPE_CHECKING:
@@ -186,6 +187,8 @@ _FUNCTIONS = [
 _PROPERTY_NAMES = ["separable", "convex", "multimodal", "shifted", "noisy"]
 _MEAN_STYLE = LineStyle(color=(0.2, 0.3, 0.8), marker="o", marker_size=3.0)
 _MEDIAN_STYLE = LineStyle(color=(0.8, 0.3, 0.2), style="--", marker="s", marker_size=3.0, marker_filled=False)
+_TF_ROW_HEIGHT = 0.05  # layout units per table row; converts element sizes to row counts
+_LEGEND_MARGIN = 0.015  # gap between the legend and the plot column's edges, in layout units
 
 
 class _FunctionsTable(Table):
@@ -203,7 +206,7 @@ class _FunctionsTable(Table):
         self._prop_group = ColumnGroup(columns=self._prop_cols, name="properties")
         super().__init__(
             n_rows=len(_FUNCTIONS),
-            row_height=0.05,
+            row_height=_TF_ROW_HEIGHT,
             groups=(
                 ColumnGroup(columns=(self._rank_col, self._name_col), name="function"),
                 self._prop_group,
@@ -235,17 +238,33 @@ class _FunctionsTable(Table):
         for i_row, (_, _, _, (mean, median)) in enumerate(_FUNCTIONS):
             canvas.plot([mean / 1.4, mean, mean * 1.4], i_row - 0.18, _MEAN_STYLE)
             canvas.plot([median / 1.4, median, median * 1.4], i_row + 0.18, _MEDIAN_STYLE)
+        self._draw_legend(table)
+
+    def _draw_legend(self, table: TableLayout) -> None:
+        """Anchor a legend inside the plot column's top-right corner.
+
+        The legend element runs its own place -> draw on a sub-region of the
+        table canvas, sized from its measurement (y converted to row units) and
+        z-sliced above the plotted data.
+        """
+        legend = Legend([LegendEntry("mean", _MEAN_STYLE), LegendEntry("median", _MEDIAN_STYLE)], row_height=0.03)
+        size = legend.measure()
+        x_max = table.column_range(self._plot_col).max - _LEGEND_MARGIN
+        y_top = _LEGEND_MARGIN / _TF_ROW_HEIGHT
+        region = table.canvas.sub_region(
+            XYZRange(
+                x=Range(x_max - size.x, x_max),
+                y=Range(y_top, y_top + size.y / _TF_ROW_HEIGHT),
+                z=Range(0.85, 1.0),
+            )
+        )
+        legend.draw(legend.place(region))
 
 
 def plotting_table_demo() -> CompositeFigure:
     """The flagship figure: a table whose last column is a log-scale plot, with skewed labels."""
     fig = CompositeFigure(fig_inch_per_unit=8.0)
     fig.add(0, 0, _FunctionsTable(), margin=0.03)
-    legend = Legend(
-        [LegendEntry("mean", _MEAN_STYLE), LegendEntry("median", _MEDIAN_STYLE)],
-        row_height=0.035,
-    )
-    fig.add(0, 0, legend, h_align=HAlign.RIGHT, v_align=VAlign.TOP, margin=0.045)
     return fig
 
 
