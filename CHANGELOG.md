@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Geometry primitives for composite layout: ranges, grids, alignment, margins
 - Vectorized linear/log/lin-log coordinate transforms and line/text/theme style objects
 - Data axes with linear/log/lin-log scales and automatic tick generation
+- Element-local drawing canvas with renderer-based text measurement
 
 ### Changed
 

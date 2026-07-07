@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
+from typing import overload
 
 import numpy as np
 
@@ -58,6 +59,13 @@ class Transform(ABC):
     # --------------------------------------------------------------------------
     #  Main API
     # --------------------------------------------------------------------------
+    @overload
+    def __call__(self, v: float) -> float: ...
+    @overload
+    def __call__(self, v: list[float]) -> list[float]: ...
+    @overload
+    def __call__(self, v: np.ndarray) -> np.ndarray: ...
+
     def __call__(self, v: float | list[float] | np.ndarray) -> float | list[float] | np.ndarray:
         """Forward transform (plot -> axis), preserving the input type."""
         is_scalar = isinstance(v, int | float)
@@ -73,6 +81,13 @@ class Transform(ABC):
         if is_list:
             return [float(el) for el in result]
         return result
+
+    @overload
+    def inv(self, v: float) -> float: ...
+    @overload
+    def inv(self, v: list[float]) -> list[float]: ...
+    @overload
+    def inv(self, v: np.ndarray) -> np.ndarray: ...
 
     def inv(self, v: float | list[float] | np.ndarray) -> float | list[float] | np.ndarray:
         """Backward transform (axis -> plot), preserving the input type."""
