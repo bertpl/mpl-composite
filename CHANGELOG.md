@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Declarative table column specs with explicit grouping: TableColumn, PlottingColumn, ColumnGroup
+
 ### Changed
 
 ### Deprecated
