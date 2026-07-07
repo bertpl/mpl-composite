@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Package now ships type information (`py.typed`)
+- PyPI metadata: supported Python versions, typing and license classifiers
 
 ### Changed
 

@@ -2,7 +2,11 @@
 name = "mpl-composite"
 version = "0.0.3"
 description = "Matplotlib wrapper for composite figure building."
-readme = "README.md"
+# readme is dynamic: hatch-fancy-pypi-readme builds the PyPI long-description from README.md,
+# rewriting the relative splash link to a tag-pinned absolute URL (config below).
+dynamic = ["readme"]
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Bert Pluymers", email = "bert.pluymers@gmail.com" }
 ]
@@ -16,6 +20,19 @@ dependencies = [
     "matplotlib>=3.8; python_version < '3.13'",
     "matplotlib>=3.9.2; python_version == '3.13'",
     "matplotlib>=3.10.7; python_version >= '3.14'",
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    # Python versions kept in sync with .python-versions (release.py enforces this)
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Typing :: Typed",
 ]
 
 [dependency-groups]
@@ -38,8 +55,20 @@ Issues = "https://github.com/bertpl/mpl-composite/issues"
 Roadmap = "https://github.com/bertpl/mpl-composite/milestones"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# splash image: relative link -> tag-pinned raw URL so each release's PyPI page
+# renders that release's stamped splash, not whatever main's is at view time.
+pattern = '\]\((images/[^)]+)\)'
+replacement = '](https://raw.githubusercontent.com/bertpl/mpl-composite/v$HFPR_VERSION/\1)'
 
 [tool.hatch.build.targets.sdist]
 packages = ["mpl_composite"]
@@ -96,6 +125,7 @@ raises-require-match-for = ["Exception", "BaseException"]  # only the truly broa
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
+"scripts/**" = ["INP001", "S"]           # maintainer tooling, not the shipped library
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
 
 [tool.ty.src]
