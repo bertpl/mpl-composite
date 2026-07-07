@@ -4,7 +4,7 @@ from .axis import PlotAxis, ScaleLinear, ScaleLinLog, ScaleLog, Ticks
 from .elements import Composite, Spacer, Text
 from .figure import CompositeFigure, save_figure
 from .geometry import HAlign, Margin, Range, VAlign
-from .plot import PlotAxes
+from .plot import Legend, LegendEntry, PlotAxes
 from .style import ColorRange, FontWeight, LineStyle, TextStyle, Theme
 
 __all__ = [
@@ -13,6 +13,8 @@ __all__ = [
     "CompositeFigure",
     "FontWeight",
     "HAlign",
+    "Legend",
+    "LegendEntry",
     "LineStyle",
     "Margin",
     "PlotAxes",
