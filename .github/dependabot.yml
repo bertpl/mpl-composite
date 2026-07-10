@@ -9,6 +9,10 @@ updates:
       - "/.github/actions/pre_commit"
     schedule:
       interval: "weekly"
+    # "chore: " prefix so PR titles (= squash commit subjects) pass the
+    # preflight title check and follow the house convention on main.
+    commit-message:
+      prefix: "chore"
     groups:
       actions:  # one batched PR for all action bumps
         patterns: ["*"]
@@ -24,6 +28,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "chore"
     groups:
       python:  # one batched PR for all Python-dependency bumps
         patterns: ["*"]
