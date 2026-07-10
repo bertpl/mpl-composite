@@ -1,0 +1,81 @@
+# Reusable package-integrity check: build the distribution once, verify the
+# wheel statically, then blind-install it into a bare environment and run the
+# test suite against it. Guards the packaging layer (empty wheel, missing
+# subpackages, broken metadata) that editable-install test runs can never see.
+# Called from the PR pipeline (behind ci-gate) and from the release pipeline
+# (before publish, which reuses the exact artifact tested here).
+name: Package check
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      # Static gate: catches structurally broken wheels (empty, missing the
+      # declared import package, ...) before the install job spins up.
+      - name: Check wheel contents
+        run: uv run --frozen check-wheel-contents dist/*.whl
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  install-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Download distribution artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist
+
+      # Blind environment: test deps come lockfile-pinned from the dev group
+      # (--no-emit-project keeps the project itself out), and mpl_composite can
+      # only come from the built wheel — never an editable/source install.
+      - name: Install the built wheel into a bare environment
+        run: |
+          uv export --frozen --no-emit-project --only-group dev -o requirements.txt
+          uv venv blind-venv
+          uv pip install --python blind-venv/bin/python -r requirements.txt
+          WHEEL=(dist/*.whl)
+          uv pip install --python blind-venv/bin/python "mpl-composite @ file://$PWD/${WHEEL[0]}"
+
+      - name: Assert the environment is blind
+        run: |
+          blind-venv/bin/python -c "
+          import mpl_composite
+          path = mpl_composite.__file__
+          assert 'site-packages' in path, f'mpl_composite resolves outside site-packages: {path}'
+          print(f'OK: mpl_composite imported from {path}')
+          "
+
+      - name: Run the test suite against the installed wheel
+        run: blind-venv/bin/python -m pytest tests/
