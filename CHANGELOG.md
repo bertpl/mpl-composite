@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Packaging hardened: src-layout, and every release wheel is now blind-install tested in CI before publishing
+
 ### Deprecated
 
 ### Removed

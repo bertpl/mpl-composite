@@ -37,6 +37,7 @@ classifiers = [
 
 [dependency-groups]
 dev = [
+    "check-wheel-contents>=0.6.2",
     "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
