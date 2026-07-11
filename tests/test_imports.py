@@ -1,21 +1,18 @@
 import importlib
+import pkgutil
 
 import pytest
 
-# The declared public surface: the root package plus every re-exporting
-# subpackage. Run against an installed wheel (the package-check pipeline),
-# this proves every public module ships and every `__all__` name resolves.
-PUBLIC_MODULES = [
-    "mpl_composite",
-    "mpl_composite.axis",
-    "mpl_composite.canvas",
-    "mpl_composite.elements",
-    "mpl_composite.figure",
-    "mpl_composite.geometry",
-    "mpl_composite.plot",
-    "mpl_composite.style",
-    "mpl_composite.table",
-    "mpl_composite.transforms",
+import mpl_composite
+
+# The public surface, discovered from the installed package: the root plus
+# every non-underscore subpackage. Run against an installed wheel (the
+# package-check pipeline), this proves every public module ships with a
+# non-empty `__all__` whose names all resolve.
+PUBLIC_MODULES = ["mpl_composite"] + [
+    f"mpl_composite.{module.name}"
+    for module in pkgutil.iter_modules(mpl_composite.__path__)
+    if not module.name.startswith("_")
 ]
 
 
