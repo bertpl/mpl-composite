@@ -70,10 +70,12 @@ pattern = '\]\((images/[^)]+)\)'
 replacement = '](https://raw.githubusercontent.com/bertpl/mpl-composite/v$HFPR_VERSION/\1)'
 
 [tool.hatch.build.targets.sdist]
-packages = ["mpl_composite"]
+# only-include preserves the src/ prefix verbatim (unlike `packages`, which rewrites
+# paths and would flatten the layout inside the sdist).
+only-include = ["src/mpl_composite"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["mpl_composite"]
+packages = ["src/mpl_composite"]
 
 [tool.ruff]
 line-length = 120
@@ -128,7 +130,7 @@ raises-require-match-for = ["Exception", "BaseException"]  # only the truly broa
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
 
 [tool.ty.src]
-include = ["mpl_composite"]
+include = ["src/mpl_composite"]
 
 [tool.coverage.run]
 source = ["mpl_composite"]
