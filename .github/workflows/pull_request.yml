@@ -20,7 +20,11 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
+      # Dependabot's branch prefix (`dependabot/...`) is not configurable, so it
+      # gets an actor-based exemption; its PR titles DO conform (dependabot.yml
+      # sets a `chore` commit-message prefix) so the title check below still runs.
       - name: Check branch name
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         env:
           BRANCH: ${{ github.head_ref }}
         run: |

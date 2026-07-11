@@ -9,21 +9,32 @@ updates:
       - "/.github/actions/pre_commit"
     schedule:
       interval: "weekly"
+    # "chore: " prefix so PR titles (= squash commit subjects) pass the
+    # preflight title check and follow the house convention on main.
+    commit-message:
+      prefix: "chore"
     groups:
       actions:  # one batched PR for all action bumps
         patterns: ["*"]
     # Let releases age before PRs open: auto-merged patch/minor bumps then sit
     # long enough for upstream compromises to surface before they can land.
+    # semver-major-days is uv-only below: action releases aren't semver-scoped
+    # the same way, so this ecosystem only supports the flat default-days.
     cooldown:
       default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
-      semver-major-days: 14
 
   - package-ecosystem: "uv"
-    # Bumps uv.lock (and pyproject pins) for the runtime + dev/lint/type tooling
-    # the lockfile deliberately pins — those rot without automated updates.
+    # Refreshes uv.lock for the runtime + dev/lint/type tooling the lockfile
+    # deliberately pins — those rot without automated updates.
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "chore"
+    # Lockfile only: pyproject's dependency floors are hand-picked (earliest
+    # wheel per CPython, so lowest-resolution CI legs install wheels) and must
+    # never be auto-bumped.
+    versioning-strategy: lockfile-only
     groups:
       python:  # one batched PR for all Python-dependency bumps
         patterns: ["*"]
