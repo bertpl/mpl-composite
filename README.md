@@ -1,6 +1,6 @@
 ![CI](https://img.shields.io/github/actions/workflow/status/bertpl/mpl-composite/push_to_main.yml?branch=main&label=CI)
 ![Coverage](https://img.shields.io/badge/coverage-99.84%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-310-blue)
+![Tests](https://img.shields.io/badge/tests-320-blue)
 ![PyPI](https://img.shields.io/pypi/v/mpl-composite.svg)
 ![Python](https://img.shields.io/pypi/pyversions/mpl-composite.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
