@@ -53,8 +53,8 @@ format-single-file:
 	uv run ruff format ${file_path};
 	uv run ruff check --fix ${file_path};
 
-# PHONY: without it these targets share names with the `docs/` source directory, so Make sees the
-# directory as an up-to-date target and skips the recipe.
+# .PHONY: the `docs` target name collides with the `docs/` source directory, so without this Make
+# treats the directory as an up-to-date target and skips the recipe.
 .PHONY: docs docs-serve
 docs:
 	uv run --no-default-groups --group docs mkdocs build --strict

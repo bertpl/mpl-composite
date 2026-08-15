@@ -111,9 +111,9 @@ jobs:
           # ignore-vulns: |
           #   GHSA-xxxx-xxxx-xxxx  # why accepted
 
-  # Docs must build cleanly at PR time. A broken nav entry, dead cross-link, or stale reference is
-  # only a warning, which a non-strict build would publish silently — Read the Docs then serves the
-  # last good build and never signals GitHub. The strict `make docs` fails this check on any warning.
+  # Docs must build cleanly at PR time. mkdocs downgrades problems like a dead cross-link to
+  # warnings, which a non-strict build would publish silently — Read the Docs then serves the last
+  # good build and never signals GitHub. The strict `make docs` fails this check on any warning.
   docs:
     needs: [preflight]
     runs-on: ubuntu-latest

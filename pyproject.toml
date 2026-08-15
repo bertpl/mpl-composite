@@ -47,8 +47,8 @@ dev = [
     "ruff>=0.15.11",
     "ty==0.0.56",  # pre-1.0 type checker — pin exactly; its ruleset is still evolving
 ]
-# Docs toolchain, kept out of the published package: RTD and `make docs` install this group via
-# `uv export`, so pip-only consumers never pull it.
+# Docs toolchain, kept out of the published package: RTD and `make docs` install this group, so
+# pip-only consumers never pull it.
 docs = [
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
