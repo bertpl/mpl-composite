@@ -1,11 +1,8 @@
 # mpl-composite
 
-A matplotlib wrapper for building composite figures — layouts assembled from reusable elements
-(plots, tables, legends, text) placed on a grid, instead of hand-managed subplot axes.
+A matplotlib wrapper for building composite figures — layouts assembled from reusable elements (plots, tables, legends, text) placed on a grid, instead of hand-managed subplot axes.
 
-Every visual piece is an **element** with a `measure → place → draw` lifecycle. A `CompositeFigure`
-composes elements on a grid, sizes itself from their measured content, and renders to a matplotlib
-figure you can save in any format.
+Every visual piece is an **element** with a `measure → place → draw` lifecycle. A `CompositeFigure` composes elements on a grid, sizes itself from their measured content, and renders to a matplotlib figure you can save in any format.
 
 ## Install
 
