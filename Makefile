@@ -15,6 +15,9 @@ help:
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
+	@echo '  docs                           Build the docs site (strict) into ./site.'
+	@echo '  docs-serve                     Serve the docs site locally with live reload.'
+	@echo ''
 	@echo '  splash       			        Build splash screen using current version of package.'
 	@echo ''
 	@echo '  release       		            Release a version: make release VERSION=X.Y.Z (validates, stamps, tags, pushes).'
@@ -49,6 +52,15 @@ format:
 format-single-file:
 	uv run ruff format ${file_path};
 	uv run ruff check --fix ${file_path};
+
+# PHONY: without it these targets share names with the `docs/` source directory, so Make sees the
+# directory as an up-to-date target and skips the recipe.
+.PHONY: docs docs-serve
+docs:
+	uv run --no-default-groups --group docs mkdocs build --strict
+
+docs-serve:
+	uv run --no-default-groups --group docs mkdocs serve
 
 splash:
 	./.github/scripts/create_splash.sh "v$$(uv version --short)-dev";
