@@ -33,6 +33,10 @@ Thumbs.db
 working_docs/*
 !working_docs/README.md
 
+# Built docs site + the RTD dependency-export artifact
+site/
+docs-requirements.txt
+
 # Local AI-assistant config (never tracked)
 .claude/
 CLAUDE.md

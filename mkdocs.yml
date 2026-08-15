@@ -1,0 +1,55 @@
+site_name: mpl-composite
+site_description: Matplotlib wrapper for composite figure building.
+site_url: https://mpl-composite.readthedocs.io/
+repo_url: https://github.com/bertpl/mpl-composite
+repo_name: bertpl/mpl-composite
+edit_uri: ""
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.top
+    - content.code.copy
+    - toc.integrate
+
+# Every nav entry must point to a page that exists — strict builds reject a dangling entry — so a
+# page and its nav line always land together.
+nav:
+  - Home: index.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bertpl/mpl-composite
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/mpl-composite/
