@@ -21,3 +21,10 @@ fig.add(0, 0, Text(1.0, 0.15, "Hello, composite"))
 rendered = fig.render()
 save_figure(rendered, "hello.png")
 ```
+
+## Next steps
+
+- **[Quickstart](quickstart.md)** — build a figure step by step.
+- **[Gallery](gallery/index.md)** — worked examples with their code.
+- **[Concepts](concepts.md)** — the model behind the API.
+- **[API Reference](reference/figure.md)** — every public class and function.

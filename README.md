@@ -3,6 +3,7 @@
 ![Tests](https://img.shields.io/badge/tests-320-blue)
 ![PyPI](https://img.shields.io/pypi/v/mpl-composite.svg)
 ![Python](https://img.shields.io/pypi/pyversions/mpl-composite.svg)
+![Docs](https://img.shields.io/readthedocs/mpl-composite?label=docs)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)
 ![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/bertpl/mpl-composite/badge)
@@ -10,5 +11,7 @@
 # mpl-composite
 
 Matplotlib wrapper for composite figure building.
+
+**Documentation:** [mpl-composite.readthedocs.io](https://mpl-composite.readthedocs.io/)
 
 ![mpl-composite splash](images/splash_with_version.webp)
