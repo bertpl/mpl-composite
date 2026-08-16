@@ -32,9 +32,36 @@ theme:
 # page and its nav line always land together.
 nav:
   - Home: index.md
+  - API Reference:
+      - Figure: reference/figure.md
+      - Elements: reference/elements.md
+      - Geometry: reference/geometry.md
+      - Style: reference/style.md
+      - Axis: reference/axis.md
+      - Plot: reference/plot.md
+      - Table: reference/table.md
 
 plugins:
   - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            merge_init_into_class: true
+            members_order: source
+            show_if_no_docstring: false
+            filters:
+              - "!^_"
+              - "^__init__$"
+              - "!^__[^_]"
 
 markdown_extensions:
   - admonition

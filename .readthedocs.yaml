@@ -9,9 +9,10 @@ build:
   jobs:
     install:
       # uv reads the PEP 735 `docs` dependency-group (pip cannot), which keeps the docs toolchain
-      # out of the package's published PyPI metadata.
+      # out of the package's published PyPI metadata. The project is installed too, so mkdocstrings
+      # can import mpl_composite to read its docstrings.
       - pip install uv
-      - uv export --only-group docs --no-emit-project > docs-requirements.txt
+      - uv export --no-default-groups --group docs --no-editable --no-hashes > docs-requirements.txt
       - pip install -r docs-requirements.txt
 
 mkdocs:
