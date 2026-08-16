@@ -32,6 +32,7 @@ theme:
 # page and its nav line always land together.
 nav:
   - Home: index.md
+  - Gallery: gallery/index.md
   - API Reference:
       - Figure: reference/figure.md
       - Elements: reference/elements.md
@@ -40,6 +41,11 @@ nav:
       - Axis: reference/axis.md
       - Plot: reference/plot.md
       - Table: reference/table.md
+
+# The gallery page and its figure images are rendered at build time from the figure registry;
+# `File.generated` injects them in memory, so nothing generated lands in the source tree.
+hooks:
+  - scripts/mkdocs_gallery_hook.py
 
 plugins:
   - search
