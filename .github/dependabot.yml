@@ -7,37 +7,103 @@ updates:
       - "/"
       - "/.github/actions/unit_test"
       - "/.github/actions/pre_commit"
+    # A distinct day per ecosystem, set in each entry's own `day:` field. Patch/minor
+    # bumps auto-merge, so 2 ecosystems firing in the same minute would let the first
+    # to merge push main ahead of the other's branch, leaving it unmergeable until
+    # someone updates that branch by hand.
+    #
+    # 01:00 local time so a PR opens and merges overnight while nothing else is pushed.
+    # Treat the schedule as a preference, not a guarantee: observed firing times vary by
+    # hours and can land off the nominal day, so the day separation is what actually
+    # prevents the collision.
     schedule:
       interval: "weekly"
-    # "chore: " prefix so PR titles (= squash commit subjects) pass the
-    # preflight title check and follow the house convention on main.
+      day: "monday"
+      time: "01:00"
+      timezone: "Europe/Zurich"
+    # `chore` prefix makes the PR title (and thus the squash commit on main)
+    # follow the repo's `<type>: <summary>` convention, so the preflight
+    # title check needs no Dependabot exemption.
     commit-message:
       prefix: "chore"
+    # Split by update type, not one batch for everything: auto-merge is decided per
+    # PR from its update type, and a batch containing a single major resolves to
+    # major — so one major bump holds every minor and patch back until a human
+    # merges it.
     groups:
-      actions:  # one batched PR for all action bumps
+      actions:  # minor/patch batch: auto-merges once checks pass
         patterns: ["*"]
-    # Let releases age before PRs open: auto-merged patch/minor bumps then sit
-    # long enough for upstream compromises to surface before they can land.
-    # semver-major-days is uv-only below: action releases aren't semver-scoped
-    # the same way, so this ecosystem only supports the flat default-days.
+        update-types: ["minor", "patch"]
+      actions-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
+    # A 14-day wait so a compromised or broken release has time to surface upstream
+    # before an auto-merged bump can land.
     cooldown:
-      default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
+      default-days: 14  # covers every semver level; no per-level override needed
 
   - package-ecosystem: "uv"
     # Refreshes uv.lock for the runtime + dev/lint/type tooling the lockfile
     # deliberately pins — those rot without automated updates.
     directory: "/"
+    # Tuesday: see the day/time rationale on the github-actions entry.
     schedule:
       interval: "weekly"
+      day: "tuesday"
+      time: "01:00"
+      timezone: "Europe/Zurich"
     commit-message:
       prefix: "chore"
-    # Lockfile only: pyproject's dependency floors are hand-picked (earliest
-    # wheel per CPython, so lowest-resolution CI legs install wheels) and must
+    # Lockfile only: pyproject's minimum dependency versions are hand-picked (earliest
+    # wheel per CPython, so the lowest-resolution CI jobs install wheels) and must
     # never be auto-bumped.
     versioning-strategy: lockfile-only
+    # Split by update type, as on the github-actions entry and for the same reason.
     groups:
-      python:  # one batched PR for all Python-dependency bumps
+      python:  # minor/patch batch: auto-merges once checks pass
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      python-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
+    # 14 days, matching PyPI's own window: a PyPI release rejects new files once it is
+    # 14 days old, a rule meant to stop someone with compromised publishing credentials
+    # from adding files to an existing release. Choosing the version only after that
+    # point means the installed file set is final for that release — a shorter wait
+    # risks picking up a file added after the initial release but before the 14-day
+    # cutoff.
+    #
+    #   https://blog.pypi.org/posts/2026-07-22-releases-now-reject-new-files-after-14-days/
+    #
+    # That announcement is the reference because there is no other: the rule has no page
+    # under docs.pypi.org; its only formal specification is PEP 694, the packaging
+    # upload-API spec. Re-check PEP 694 before changing this default, since PyPI's
+    # 14-day window and this cooldown are meant to match.
     cooldown:
-      default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
-      semver-major-days: 14
+      default-days: 14  # covers every semver level; no per-level override needed
+
+  - package-ecosystem: "pre-commit"
+    # Bumps the pinned `rev` of each managed hook in .pre-commit-config.yaml; the
+    # hook tooling rots without these bumps. The uv-pinned local hooks are updated
+    # through the uv entry instead.
+    directory: "/"
+    # Wednesday: see the day/time rationale on the github-actions entry.
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "01:00"
+      timezone: "Europe/Zurich"
+    commit-message:
+      prefix: "chore"
+    # Split by update type, as on the github-actions and uv entries, for the same reason.
+    groups:
+      pre-commit:  # minor/patch batch: auto-merges once checks pass
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      pre-commit-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
+    # 14 days, matching the other entries. A hook `rev` resolves to a git ref, so the
+    # same wait-time reasoning as the github-actions entry applies.
+    cooldown:
+      default-days: 14  # covers every semver level; no per-level override needed
