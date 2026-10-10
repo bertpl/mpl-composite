@@ -65,9 +65,9 @@ docs-serve:
 splash:
 	./.github/scripts/create_splash.sh "v$$(uv version --short)-dev";
 
-# Run release.py's checks first with --dry-run: they take seconds, plus any wait for the CI run on
-# main for HEAD to finish, so a bad changelog or a failed CI run stops the release before the test
-# suite runs.
+# Run release.py's checks first with --dry-run, so a bad changelog or a failed CI run stops the
+# release before the test suite runs. The checks take seconds, plus any time that the CI run on main
+# for HEAD still needs to finish.
 release:
 	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z" && exit 1)
 	uv run python scripts/release.py $(VERSION) --dry-run

@@ -189,8 +189,8 @@ def step_7_check_changelog_has_entries() -> None:
 def step_8_check_stamping_inputs() -> None:
     """Validate that the README badges and the splash inputs are in place for the release commit.
 
-    A badge that the README no longer carries would otherwise be skipped silently by the
-    substitution in `refresh_readme_badges`, leaving a stale badge in the release.
+    Without this check, `refresh_readme_badges` leaves a badge whose URL no longer matches its
+    pattern unchanged, and the release ships with that badge's old number.
     """
     print_step(8, "README badges and splash inputs are in place for stamping")
     readme = README.read_text()
@@ -205,15 +205,12 @@ def step_8_check_stamping_inputs() -> None:
             fail_with_message(f"the splash cannot be stamped: {path.relative_to(REPO_ROOT)} is missing")
 
 
-# Gathering the badge metrics is the last check: the fetch runs after every quick check has passed
-# and before the first write. When the 'Push to Main' run for HEAD is still in progress, the step
-# waits for it, because that is the usual state right after a merge, and waiting saves the
-# maintainer from watching CI and re-running the release by hand.
-
-# warn if the cumulative union exceeds this multiple of the largest single combo
+# warn if the number of distinct tests across all CI matrix entries exceeds this multiple of the
+# largest test count of a single matrix entry
 TEST_COUNT_UNION_RATIO_WARN = 1.5
 
-# how long to wait for an in-progress 'Push to Main' run on HEAD, and how often to re-check
+# The release waits at most CI_WAIT_TIMEOUT_SEC for an in-progress 'Push to Main' run on HEAD, and
+# re-checks the run every CI_POLL_INTERVAL_SEC.
 CI_WAIT_TIMEOUT_SEC = 25 * 60
 CI_POLL_INTERVAL_SEC = 30
 
@@ -223,7 +220,34 @@ class BadgeMetrics:
     """A BadgeMetrics records the numbers on the README coverage and test-count badges for one release."""
 
     coverage_pct: float
-    test_union: int
+    test_count: int
+
+    @property
+    def coverage_color(self) -> str:
+        """Return the shields.io badge color for `coverage_pct`."""
+        if self.coverage_pct >= 90:
+            return "brightgreen"
+        elif self.coverage_pct >= 75:
+            return "yellow"
+        else:
+            return "red"
+
+    # --------------------------------------------------------------------------
+    #  Factory methods
+    # --------------------------------------------------------------------------
+    @classmethod
+    def from_release_metrics(cls, metrics: dict[str, float]) -> BadgeMetrics:
+        """Build the badge numbers from CI's `metrics.json`, warning when the test union looks inflated."""
+        union = int(metrics["test_union"])
+        max_combo = int(metrics["test_max"])
+        if max_combo and union > TEST_COUNT_UNION_RATIO_WARN * max_combo:
+            print(
+                f"\nWARNING: cumulative test count ({union}) exceeds "
+                f"{TEST_COUNT_UNION_RATIO_WARN}x the largest single combo ({max_combo}). "
+                "Node-id mismatches across combos can inflate the union — verify before publishing.\n",
+                file=sys.stderr,
+            )
+        return cls(coverage_pct=float(metrics["coverage_pct"]), test_count=union)
 
 
 def _main_run_id_for(head_sha: str) -> str | None:
@@ -254,40 +278,39 @@ def _main_run_id_for(head_sha: str) -> str | None:
         return None
 
 
-def _workflow_run_state(run_id: str) -> tuple[str, str]:
-    """Return (status, conclusion) of the workflow run `run_id`; conclusion is empty until the run completes."""
-    state = json.loads(run_command(["gh", "run", "view", run_id, "--json", "status,conclusion"]))
-    return state["status"], state.get("conclusion") or ""
+def _wait_for_main_run_id(head_sha: str) -> str:
+    """Return the id of a successful 'Push to Main' run for `head_sha`, waiting for one in progress.
 
+    When the 'Push to Main' run for HEAD is still in progress, this function waits for it, because
+    an in-progress run is the usual state right after a merge, and waiting saves the maintainer from
+    watching CI and re-running the release by hand.
 
-def _wait_for_main_ci(local_head: str) -> str:
-    """Return the id of a successful 'Push to Main' run for `local_head`, waiting for one in progress.
+    The function aborts when:
 
-    Aborts when:
-
-    - no run exists for `local_head` (the push did not trigger CI);
+    - no run exists for `head_sha` (the push did not trigger CI);
     - the run concluded without success;
     - `CI_WAIT_TIMEOUT_SEC` passes without the run completing.
 
     Once found, the run is polled by its id, so an out-of-date result from `gh run list` cannot
     hide the run.
     """
-    run_id = _main_run_id_for(local_head)
+    run_id = _main_run_id_for(head_sha)
     if run_id is None:
-        fail_with_message(f"no 'Push to Main' run found for HEAD {local_head[:8]} — did the push trigger CI?")
+        fail_with_message(f"no 'Push to Main' run found for HEAD {head_sha[:8]} — did the push trigger CI?")
     deadline = time.monotonic() + CI_WAIT_TIMEOUT_SEC
-    announced = False
+    is_wait_announced = False
     while True:
-        status, conclusion = _workflow_run_state(run_id)
+        state = json.loads(run_command(["gh", "run", "view", run_id, "--json", "status,conclusion"]))
+        status, conclusion = state["status"], state.get("conclusion") or ""
         if status == "completed":
             if conclusion != "success":
-                fail_with_message(f"'Push to Main' run for HEAD {local_head[:8]} concluded '{conclusion}'")
+                fail_with_message(f"'Push to Main' run for HEAD {head_sha[:8]} concluded '{conclusion}'")
             return run_id
-        if not announced:
-            print(f"       CI for HEAD {local_head[:8]} is {status} — waiting up to {CI_WAIT_TIMEOUT_SEC // 60} min")
-            announced = True
+        if not is_wait_announced:
+            print(f"       CI for HEAD {head_sha[:8]} is {status} — waiting up to {CI_WAIT_TIMEOUT_SEC // 60} min")
+            is_wait_announced = True
         if time.monotonic() >= deadline:
-            fail_with_message(f"timed out after {CI_WAIT_TIMEOUT_SEC // 60} min waiting for CI on {local_head[:8]}")
+            fail_with_message(f"timed out after {CI_WAIT_TIMEOUT_SEC // 60} min waiting for CI on {head_sha[:8]}")
         time.sleep(CI_POLL_INTERVAL_SEC)
 
 
@@ -295,30 +318,24 @@ def _fetch_release_metrics() -> dict[str, float]:
     """Download CI's cumulative metrics for the commit being released.
 
     The numbers come from the matrix combine job, not a local run, so the
-    badge matches the CI gate exactly. It waits up to `CI_WAIT_TIMEOUT_SEC` for HEAD's
+    badge matches the CI gate exactly. The function waits up to `CI_WAIT_TIMEOUT_SEC` for HEAD's
     'Push to Main' run to succeed, and exits when no such run succeeds in time.
     """
-    local_head = run_command(["git", "rev-parse", "HEAD"]).strip()
-    run_id = _wait_for_main_ci(local_head)
+    head_sha = run_command(["git", "rev-parse", "HEAD"]).strip()
+    run_id = _wait_for_main_run_id(head_sha)
     with tempfile.TemporaryDirectory() as tmp:
         run_command(["gh", "run", "download", run_id, "--name", "release-metrics", "--dir", tmp])
         return json.loads((Path(tmp) / "metrics.json").read_text())
 
 
 def step_9_gather_badge_metrics() -> BadgeMetrics:
-    """Resolve every badge number, failing the release if any of them cannot be obtained."""
+    """Resolve every badge number, failing the release if any of them cannot be obtained.
+
+    This step blocks for up to `CI_WAIT_TIMEOUT_SEC` while HEAD's 'Push to Main' run is still in
+    progress.
+    """
     print_step(9, "gather badge metrics (CI metrics for HEAD)")
-    metrics = _fetch_release_metrics()
-    union = int(metrics["test_union"])
-    max_combo = int(metrics["test_max"])
-    if max_combo and union > TEST_COUNT_UNION_RATIO_WARN * max_combo:
-        print(
-            f"\nWARNING: cumulative test count ({union}) exceeds "
-            f"{TEST_COUNT_UNION_RATIO_WARN}x the largest single combo ({max_combo}). "
-            "Node-id mismatches across combos can inflate the union — verify before publishing.\n",
-            file=sys.stderr,
-        )
-    return BadgeMetrics(coverage_pct=float(metrics["coverage_pct"]), test_union=union)
+    return BadgeMetrics.from_release_metrics(_fetch_release_metrics())
 
 
 # ==================================================================================================
@@ -378,39 +395,22 @@ def step_12_finalize_changelog(version: str) -> None:
     CHANGELOG.write_text(text)
 
 
-def _coverage_color(pct: float) -> str:
-    """Map a coverage percentage to a shields.io badge color."""
-    if pct >= 90:
-        return "brightgreen"
-    return "yellow" if pct >= 75 else "red"
-
-
-def refresh_readme_badges(badges: BadgeMetrics) -> None:
-    """Stamp the README coverage + test-count badges from the metrics in `badges`."""
+def refresh_readme_badges(badge_metrics: BadgeMetrics) -> None:
+    """Stamp the README coverage + test-count badges from `badge_metrics`."""
     text = README.read_text()
     text = COVERAGE_BADGE_RE.sub(
-        f"badge/coverage-{badges.coverage_pct:.2f}%25-{_coverage_color(badges.coverage_pct)}",
+        f"badge/coverage-{badge_metrics.coverage_pct:.2f}%25-{badge_metrics.coverage_color}",
         text,
     )
-    text = TESTS_BADGE_RE.sub(f"badge/tests-{badges.test_union}-blue", text)
+    text = TESTS_BADGE_RE.sub(f"badge/tests-{badge_metrics.test_count}-blue", text)
     README.write_text(text)
 
 
-def stamp_splash(version: str) -> None:
-    """Stamp the release version onto the committed splash webp (needs ImageMagick).
-
-    Runs the second stage of ``create_splash.sh`` (the version overlay) on the
-    committed, version-independent base image. `step_8_check_stamping_inputs` has
-    already checked that ImageMagick and the script's inputs are present.
-    """
-    run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)
-
-
-def step_13_commit_release(version: str, badges: BadgeMetrics) -> None:
+def step_13_commit_release(version: str, badge_metrics: BadgeMetrics) -> None:
     """Refresh README badges, stamp the splash, then create the release commit."""
     print_step(13, f"refresh README badges + stamp splash + commit 'release: {version}'")
-    refresh_readme_badges(badges)
-    stamp_splash(version)
+    refresh_readme_badges(badge_metrics)
+    run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)  # inputs checked in step 8
     run_command(["git", "add", "pyproject.toml", "uv.lock", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])
 
@@ -466,13 +466,17 @@ def post_tag_recovery_hint(version: str, also_next_cycle: bool) -> None:
 
 
 def main() -> None:
-    """Entry point."""
+    """Entry point.
+
+    Gathering the badge metrics is the last check, because it downloads CI's metrics and can wait for
+    minutes; it runs after every other check has passed and before the first write.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version", help="X.Y.Z (no leading v)")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="run every check, including the CI badge-metrics fetch, then stop before the first write",
+        help="run every check, including fetching the badge metrics from CI, then stop before the first write",
     )
     args = parser.parse_args()
     version = args.version
@@ -489,12 +493,12 @@ def main() -> None:
     step_6_check_classifiers_match()
     step_7_check_changelog_has_entries()
     step_8_check_stamping_inputs()
-    badges = step_9_gather_badge_metrics()
+    badge_metrics = step_9_gather_badge_metrics()
 
     if args.dry_run:
         print(
             f"\nDry run: every check passed and nothing was written.\n"
-            f"  coverage {badges.coverage_pct:.2f}% | tests {badges.test_union}\n"
+            f"  coverage {badge_metrics.coverage_pct:.2f}% | tests {badge_metrics.test_count}\n"
         )
         return
 
@@ -502,7 +506,7 @@ def main() -> None:
     step_10_bump_version(version)
     step_11_lock()
     step_12_finalize_changelog(version)
-    step_13_commit_release(version, badges)
+    step_13_commit_release(version, badge_metrics)
     step_14_tag(version)
 
     print("\nPost-release:")

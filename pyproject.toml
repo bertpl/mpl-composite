@@ -125,8 +125,8 @@ select = [
     "C901",    # mccabe complexity gate (threshold in [tool.ruff.lint.mccabe])
 ]
 ignore = [
-    "RET505",  # an explicit else after an if-return chain reads as the final case of a dispatch; no-else-return is not house preference
-    "SIM108",  # an if/else block reads better than a conditional expression when a branch does work, which this rule cannot tell
+    "RET505",  # an else around the final return shows that exactly one branch runs and returns; the house style keeps that else
+    "SIM108",  # an if/else block reads better than a conditional expression when a branch does work, and SIM108 cannot detect whether a branch does work
 ]
 
 [tool.ruff.lint.mccabe]
