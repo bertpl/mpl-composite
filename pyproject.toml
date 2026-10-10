@@ -124,6 +124,10 @@ select = [
     "S",       # flake8-bandit: security lint
     "C901",    # mccabe complexity gate (threshold in [tool.ruff.lint.mccabe])
 ]
+ignore = [
+    "RET505",  # an explicit else after an if-return chain reads as the final case of a dispatch; no-else-return is not house preference
+    "SIM108",  # an if/else block reads better than a conditional expression when a branch does work, which this rule cannot tell
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
