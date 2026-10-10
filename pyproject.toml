@@ -13,8 +13,8 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     # Each dependency's minimum version per Python is the earliest one shipping a wheel for that
-    # CPython, so a `lowest-direct` resolution installs wheels, not source builds, on every Python
-    # in the CI test matrix.
+    # CPython. A `lowest-direct` resolution installs the lowest allowed version of each direct
+    # dependency, so it installs wheels, not source builds, on every Python in the CI test matrix.
     "numpy>=2.0.0; python_version < '3.13'",
     "numpy>=2.1.0; python_version == '3.13'",
     "numpy>=2.3.2; python_version == '3.14'",

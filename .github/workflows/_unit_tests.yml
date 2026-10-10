@@ -15,8 +15,7 @@ jobs:
       matrix:
         # ubuntu-only: pure Python + numpy/matplotlib with no OS-specific code paths,
         # so one OS exercises everything. The entries below cover every supported Python and
-        # both resolution modes (highest, lowest-direct), not every Python with every
-        # resolution mode.
+        # both resolution modes, but not every combination of the two.
         include:
           - { python: "3.11", resolution: highest       }
           - { python: "3.12", resolution: highest       }
