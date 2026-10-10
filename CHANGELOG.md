@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Online documentation at https://mpl-composite.readthedocs.io/ — API reference, worked-example gallery, and guides
+- Add online documentation at https://mpl-composite.readthedocs.io/ with an API reference, example gallery and guides
 
 ### Changed
 
