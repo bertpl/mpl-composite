@@ -39,7 +39,16 @@ PACKAGE_NAME = "mpl-composite"
 CATEGORIES = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 COVERAGE_BADGE_RE = re.compile(r"badge/coverage-[\d.]+%25-[a-z]+")
-TESTS_BADGE_RE = re.compile(r"badge/tests-\d+-blue")
+TEST_COUNT_BADGE_RE = re.compile(r"badge/tests-\d+-blue")
+
+# warn if the number of distinct tests across all CI matrix entries exceeds this multiple of the
+# largest test count of a single matrix entry
+TEST_COUNT_UNION_RATIO_WARN = 1.5
+
+# The release waits at most CI_WAIT_TIMEOUT_SEC for an in-progress 'Push to Main' run on HEAD, and
+# re-checks the run every CI_POLL_INTERVAL_SEC.
+CI_WAIT_TIMEOUT_SEC = 25 * 60
+CI_POLL_INTERVAL_SEC = 30
 
 
 # ==================================================================================================
@@ -189,12 +198,13 @@ def step_7_check_changelog_has_entries() -> None:
 def step_8_check_stamping_inputs() -> None:
     """Validate that the README badges and the splash inputs are in place for the release commit.
 
-    Without this check, `refresh_readme_badges` leaves a badge whose URL no longer matches its
-    pattern unchanged, and the release ships with that badge's old number.
+    Without this check, `BadgeMetrics.refresh_readme_badges` silently skips a badge whose URL does
+    not match `COVERAGE_BADGE_RE` or `TEST_COUNT_BADGE_RE`, and the release ships that badge with
+    its old number.
     """
     print_step(8, "README badges and splash inputs are in place for stamping")
     readme = README.read_text()
-    for name, badge_re in (("coverage", COVERAGE_BADGE_RE), ("test-count", TESTS_BADGE_RE)):
+    for name, badge_re in (("coverage", COVERAGE_BADGE_RE), ("test-count", TEST_COUNT_BADGE_RE)):
         n_badges = len(badge_re.findall(readme))
         if n_badges != 1:
             fail_with_message(f"README.md must carry exactly 1 {name} badge to stamp (found {n_badges})")
@@ -203,16 +213,6 @@ def step_8_check_stamping_inputs() -> None:
     for path in (SPLASH_SCRIPT, SPLASH_BASE_PNG, SPLASH_FONT):
         if not path.is_file():
             fail_with_message(f"the splash cannot be stamped: {path.relative_to(REPO_ROOT)} is missing")
-
-
-# warn if the number of distinct tests across all CI matrix entries exceeds this multiple of the
-# largest test count of a single matrix entry
-TEST_COUNT_UNION_RATIO_WARN = 1.5
-
-# The release waits at most CI_WAIT_TIMEOUT_SEC for an in-progress 'Push to Main' run on HEAD, and
-# re-checks the run every CI_POLL_INTERVAL_SEC.
-CI_WAIT_TIMEOUT_SEC = 25 * 60
-CI_POLL_INTERVAL_SEC = 30
 
 
 @dataclass(frozen=True)
@@ -232,22 +232,36 @@ class BadgeMetrics:
         else:
             return "red"
 
+    def refresh_readme_badges(self) -> None:
+        """Stamp the README coverage + test-count badges with these numbers."""
+        text = README.read_text()
+        text = COVERAGE_BADGE_RE.sub(f"badge/coverage-{self.coverage_pct:.2f}%25-{self.coverage_color}", text)
+        text = TEST_COUNT_BADGE_RE.sub(f"badge/tests-{self.test_count}-blue", text)
+        README.write_text(text)
+
     # --------------------------------------------------------------------------
     #  Factory methods
     # --------------------------------------------------------------------------
     @classmethod
     def from_release_metrics(cls, metrics: dict[str, float]) -> BadgeMetrics:
-        """Build the badge numbers from CI's `metrics.json`, warning when the test union looks inflated."""
-        union = int(metrics["test_union"])
-        max_combo = int(metrics["test_max"])
-        if max_combo and union > TEST_COUNT_UNION_RATIO_WARN * max_combo:
+        """Build the badge numbers from CI's `metrics.json`, warning when the distinct-test count looks too high.
+
+        Args:
+            metrics: CI's `metrics.json`, with `coverage_pct`, `test_union` (distinct tests across
+                all matrix entries, shown on the test-count badge) and `test_max` (the largest test
+                count of a single matrix entry).
+        """
+        union_test_count = int(metrics["test_union"])
+        max_combo_test_count = int(metrics["test_max"])
+        if max_combo_test_count and union_test_count > TEST_COUNT_UNION_RATIO_WARN * max_combo_test_count:
             print(
-                f"\nWARNING: cumulative test count ({union}) exceeds "
-                f"{TEST_COUNT_UNION_RATIO_WARN}x the largest single combo ({max_combo}). "
-                "Node-id mismatches across combos can inflate the union — verify before publishing.\n",
+                f"\nWARNING: the number of distinct tests across all matrix entries ({union_test_count}) exceeds "
+                f"{TEST_COUNT_UNION_RATIO_WARN}x the largest test count of a single matrix entry "
+                f"({max_combo_test_count}). "
+                "Node ids that differ between matrix entries can increase this number — verify before publishing.\n",
                 file=sys.stderr,
             )
-        return cls(coverage_pct=float(metrics["coverage_pct"]), test_count=union)
+        return cls(coverage_pct=float(metrics["coverage_pct"]), test_count=union_test_count)
 
 
 def _main_run_id_for(head_sha: str) -> str | None:
@@ -278,27 +292,24 @@ def _main_run_id_for(head_sha: str) -> str | None:
         return None
 
 
-def _wait_for_main_run_id(head_sha: str) -> str:
+def _wait_for_successful_main_run(head_sha: str) -> str:
     """Return the id of a successful 'Push to Main' run for `head_sha`, waiting for one in progress.
 
-    When the 'Push to Main' run for HEAD is still in progress, this function waits for it, because
-    an in-progress run is the usual state right after a merge, and waiting saves the maintainer from
-    watching CI and re-running the release by hand.
+    The function waits for an in-progress run. An in-progress run is the usual state right after a
+    merge, and waiting spares the maintainer from watching CI and re-running the release by hand.
 
     The function aborts when:
 
     - no run exists for `head_sha` (the push did not trigger CI);
     - the run concluded without success;
     - `CI_WAIT_TIMEOUT_SEC` passes without the run completing.
-
-    Once found, the run is polled by its id, so an out-of-date result from `gh run list` cannot
-    hide the run.
     """
     run_id = _main_run_id_for(head_sha)
     if run_id is None:
         fail_with_message(f"no 'Push to Main' run found for HEAD {head_sha[:8]} — did the push trigger CI?")
     deadline = time.monotonic() + CI_WAIT_TIMEOUT_SEC
     is_wait_announced = False
+    # Poll the run by its id, so an out-of-date result from `gh run list` cannot cause the run to be missed.
     while True:
         state = json.loads(run_command(["gh", "run", "view", run_id, "--json", "status,conclusion"]))
         status, conclusion = state["status"], state.get("conclusion") or ""
@@ -317,12 +328,13 @@ def _wait_for_main_run_id(head_sha: str) -> str:
 def _fetch_release_metrics() -> dict[str, float]:
     """Download CI's cumulative metrics for the commit being released.
 
-    The numbers come from the matrix combine job, not a local run, so the
-    badge matches the CI gate exactly. The function waits up to `CI_WAIT_TIMEOUT_SEC` for HEAD's
+    The numbers come from the CI job that combines coverage across all test-matrix entries, not from
+    a local run, so the badge shows the same coverage that CI checks against its minimum. The function
+    waits up to `CI_WAIT_TIMEOUT_SEC` for HEAD's
     'Push to Main' run to succeed, and exits when no such run succeeds in time.
     """
     head_sha = run_command(["git", "rev-parse", "HEAD"]).strip()
-    run_id = _wait_for_main_run_id(head_sha)
+    run_id = _wait_for_successful_main_run(head_sha)
     with tempfile.TemporaryDirectory() as tmp:
         run_command(["gh", "run", "download", run_id, "--name", "release-metrics", "--dir", tmp])
         return json.loads((Path(tmp) / "metrics.json").read_text())
@@ -395,22 +407,12 @@ def step_12_finalize_changelog(version: str) -> None:
     CHANGELOG.write_text(text)
 
 
-def refresh_readme_badges(badge_metrics: BadgeMetrics) -> None:
-    """Stamp the README coverage + test-count badges from `badge_metrics`."""
-    text = README.read_text()
-    text = COVERAGE_BADGE_RE.sub(
-        f"badge/coverage-{badge_metrics.coverage_pct:.2f}%25-{badge_metrics.coverage_color}",
-        text,
-    )
-    text = TESTS_BADGE_RE.sub(f"badge/tests-{badge_metrics.test_count}-blue", text)
-    README.write_text(text)
-
-
 def step_13_commit_release(version: str, badge_metrics: BadgeMetrics) -> None:
     """Refresh README badges, stamp the splash, then create the release commit."""
     print_step(13, f"refresh README badges + stamp splash + commit 'release: {version}'")
-    refresh_readme_badges(badge_metrics)
-    run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)  # inputs checked in step 8
+    badge_metrics.refresh_readme_badges()
+    # step_8_check_stamping_inputs checked the splash inputs
+    run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)
     run_command(["git", "add", "pyproject.toml", "uv.lock", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])
 
@@ -466,15 +468,12 @@ def post_tag_recovery_hint(version: str, also_next_cycle: bool) -> None:
 
 
 def main() -> None:
-    """Entry point.
-
-    Gathering the badge metrics is the last check, because it downloads CI's metrics and can wait for
-    minutes; it runs after every other check has passed and before the first write.
-    """
+    """Run every release check; unless --dry-run is given, then commit, tag and push the release."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version", help="X.Y.Z (no leading v)")
     parser.add_argument(
         "--dry-run",
+        dest="is_dry_run",
         action="store_true",
         help="run every check, including fetching the badge metrics from CI, then stop before the first write",
     )
@@ -493,9 +492,10 @@ def main() -> None:
     step_6_check_classifiers_match()
     step_7_check_changelog_has_entries()
     step_8_check_stamping_inputs()
+    # Gathering the badge metrics runs last, because it downloads CI's metrics and can wait for minutes.
     badge_metrics = step_9_gather_badge_metrics()
 
-    if args.dry_run:
+    if args.is_dry_run:
         print(
             f"\nDry run: every check passed and nothing was written.\n"
             f"  coverage {badge_metrics.coverage_pct:.2f}% | tests {badge_metrics.test_count}\n"
