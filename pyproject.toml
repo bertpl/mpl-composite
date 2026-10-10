@@ -12,14 +12,17 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    # Per-Python floors: each is the earliest version shipping a wheel for that
-    # CPython, so `lowest-direct` installs (not source-builds) across the whole matrix.
+    # Each dependency's minimum version per Python is the earliest one shipping a wheel for that
+    # CPython. A `lowest-direct` resolution installs the lowest allowed version of each direct
+    # dependency, so it installs wheels, not source builds, on every Python in the CI test matrix.
     "numpy>=2.0.0; python_version < '3.13'",
     "numpy>=2.1.0; python_version == '3.13'",
-    "numpy>=2.3.2; python_version >= '3.14'",
+    "numpy>=2.3.2; python_version == '3.14'",
+    "numpy>=2.5.2; python_version >= '3.15'",
     "matplotlib>=3.8; python_version < '3.13'",
     "matplotlib>=3.10.7; python_version == '3.13'",
-    "matplotlib>=3.10.7; python_version >= '3.14'",
+    "matplotlib>=3.10.7; python_version == '3.14'",
+    "matplotlib>=3.11.2; python_version >= '3.15'",
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -31,6 +34,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Visualization",
     "Typing :: Typed",
 ]
