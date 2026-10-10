@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add online documentation at https://mpl-composite.readthedocs.io/
+- Add support for Python 3.15
 
 ### Changed
 
